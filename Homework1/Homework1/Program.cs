@@ -4,28 +4,40 @@ namespace Homework1
 {
     class Weapon
     {
-        public int Damage;
-        public int Bullets;
+        private int _damage;
+        private int _bullets;
 
         public void Fire(Player player)
         {
-            player.Health -= Damage;
-            Bullets -= 1;
+            if(_bullets >= 1)
+            {
+                player.TakeDamage(_damage);
+                _bullets -= 1;
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
         }
     }
 
     class Player
     {
-        public int Health;
+        private int _health;
+
+        public void TakeDamage(int damage)
+        {
+            _health -= damage;
+        }
     }
 
     class Bot
     {
-        public Weapon Weapon;
+        private Weapon _weapon;
 
         public void OnSeePlayer(Player player)
         {
-            Weapon.Fire(player);
+            _weapon.Fire(player);
         }
     }
 }
