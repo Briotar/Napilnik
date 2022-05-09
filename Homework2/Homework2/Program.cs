@@ -50,7 +50,7 @@ namespace Homework2
             }
         }
 
-        public void ShowInfo()
+        public void Order()
         {
             Console.WriteLine("\n Корзина:");
 
@@ -184,9 +184,10 @@ namespace Homework2
             Cart cart = shop.Cart();
 
             cart.Add(iPhone12, 1);
-            cart.ShowInfo();
+            cart.Add(iPhone11, 2);
+            cart.Order();
             cart.Add(iPhone12, 1);
-            cart.ShowInfo();
+            cart.Order();
         }
     }
 }
