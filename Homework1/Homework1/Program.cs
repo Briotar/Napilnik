@@ -4,19 +4,28 @@ namespace Homework1
 {
     class Weapon
     {
-        private int _damage;
+        private readonly int _damage;
+        private readonly int _bulletsPerShot = 1;
         private int _bullets;
+
+        public bool CanFire()
+        {
+            if (_bullets >= _bulletsPerShot)
+                return true;
+            else
+                return false;
+        }
 
         public void Fire(Player player)
         {
-            if(_bullets >= 1)
+            if (player == null)
             {
-                player.TakeDamage(_damage);
-                _bullets -= 1;
+                throw new NullReferenceException();
             }
             else
             {
-                throw new InvalidOperationException();
+                player.TakeDamage(_damage);
+                _bullets -= _bulletsPerShot;
             }
         }
     }
@@ -27,7 +36,10 @@ namespace Homework1
 
         public void TakeDamage(int damage)
         {
-            _health -= damage;
+            if (damage < 0)
+                throw new ArgumentOutOfRangeException();
+            else
+                _health -= damage;
         }
     }
 
@@ -37,7 +49,10 @@ namespace Homework1
 
         public void OnSeePlayer(Player player)
         {
-            _weapon.Fire(player);
+            if (_weapon == null)
+                throw new NullReferenceException();
+            else if (_weapon.CanFire())
+                _weapon.Fire(player);
         }
     }
 }
