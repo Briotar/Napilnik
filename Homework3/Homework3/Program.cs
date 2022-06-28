@@ -3,15 +3,15 @@ using System.IO;
 
 namespace Lesson
 {
-    interface ILogger
+    internal interface ILogger
     {
         void Find();
     }
 
-    class ConsoleLogWriter : ILogger
+    internal class ConsoleLogWriter : ILogger
     {
-        private ILogger _logger;
-        private string _message;
+        private readonly ILogger _logger;
+        private readonly string _message;
 
         public ConsoleLogWriter(string message, ILogger logger = null)
         {
@@ -23,16 +23,18 @@ namespace Lesson
         {
             Console.WriteLine(_message);
 
-            if(_logger != null)
+            if (_logger != null)
                 _logger.Find();
+            else
+                throw new NullReferenceException();
         }
     }
 
-    class FileLogWriter : ILogger
+    internal class FileLogWriter : ILogger
     {
-        private ILogger _logger;
-        private string _message;
-        private string _filename;
+        private readonly ILogger _logger;
+        private readonly string _message;
+        private readonly string _filename;
 
         public FileLogWriter(string message, string filename, ILogger logger = null)
         {
@@ -49,19 +51,21 @@ namespace Lesson
 
             if (_logger != null)
                 _logger.Find();
+            else
+                throw new NullReferenceException();
         }
     }
 
-    class SecureLogWriter : ILogger
+    internal class SecureLogWriter : ILogger
     {
-        ILogger _logger;
+        private readonly ILogger _logger;
 
         public SecureLogWriter(ILogger logger)
         {
             _logger = logger;
         }
 
-        public  void Find()
+        public void Find()
         {
             if (DateTime.Now.DayOfWeek == DayOfWeek.Thursday)
             {
@@ -70,10 +74,9 @@ namespace Lesson
         }
     }
 
-
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             string filename = "File";
 
@@ -81,13 +84,13 @@ namespace Lesson
             ILogger fileWriter = new FileLogWriter("Просто написал в файл", filename);
             ILogger secureConsoleWriter = new SecureLogWriter(new ConsoleLogWriter("Написал в консоль в  пятницу"));
             ILogger secureFileWriter = new SecureLogWriter(new FileLogWriter("Написал в файл в  пятницу", filename));
-            ILogger ConsoleWriterAndSecuryFileWriter = new ConsoleLogWriter("Написаль в консоль", new SecureLogWriter(new FileLogWriter("Но сегодня пятница, поэтому и в файл", filename)));
+            ILogger consoleWriterAndSecuryFileWriter = new ConsoleLogWriter("Написаль в консоль", new SecureLogWriter(new FileLogWriter("Но сегодня пятница, поэтому и в файл", filename)));
 
             consoleWriter.Find();
             fileWriter.Find();
             secureConsoleWriter.Find();
             secureFileWriter.Find();
-            ConsoleWriterAndSecuryFileWriter.Find();
+            consoleWriterAndSecuryFileWriter.Find();
         }
     }
 }
