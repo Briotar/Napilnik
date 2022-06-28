@@ -5,116 +5,73 @@ namespace Homework2
 {
     public class Good
     {
-        private string _label;
-
-        public string Label => _label;
+        private readonly string _label;
 
         public Good(string label)
         {
             _label = label;
         }
+
+        public string Label => _label;
     }
 
-    public class Cart
+    public class Cart : Warehouse
     {
-        private Warehouse _warehouse;
-        private List<GoodsCell> _cells = new List<GoodsCell>();
+        private readonly Warehouse _warehouse;
 
         public Cart(Warehouse warehouse)
         {
             _warehouse = warehouse;
         }
 
-        private void CreateNewCell(Good good, int goodsCount)
-        {
-            GoodsCell newCell = new GoodsCell(good, goodsCount);
-            _cells.Add(newCell);
-        }
-
         public void Add(Good good, int goodsCount)
         {
-            for (int i = 0; i < _warehouse.Cells.Count; i++)
+            int index = _warehouse.CheckGoodAvailability(good);
+
+            if (_warehouse.Goods[index].Item2 >= goodsCount)
             {
-                if (_warehouse.Cells[i].Good.Label == good.Label)
-                {
-                    if (_warehouse.Cells[i].GoodsCount >= goodsCount)
-                    {
-                        CreateNewCell(good, goodsCount);
-                        _warehouse.Cells[i].DecreaseGoodsCount(goodsCount);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Столько товара нет!");
-                    }
-                }
+                AddNewGoods(good, goodsCount);
+                _warehouse.DecreaseGoodsCount(goodsCount, index);
+            }
+            else
+            {
+               Console.WriteLine("Столько товара нет!");
             }
         }
 
-        public void Order()
+        public override void ShowInfo()
         {
             Console.WriteLine("\n Корзина:");
 
-            for (int i = 0; i < _cells.Count; i++)
-            {
-                Console.Write($"Название - {_cells[i].Good.Label}");
-                Console.WriteLine($" количество - {_cells[i].GoodsCount}");
-            }
-        }
-    }
-
-    public class GoodsCell
-    {
-        private Good _good;
-        private int _goodsCount;
-
-        public Good Good => _good;
-        public int GoodsCount => _goodsCount;
-
-        public GoodsCell(Good good, int goodsCount)
-        {
-            if(goodsCount <= 0)
-            {
-                throw new InvalidOperationException();
-            }
-            else
-            {
-                _good = good;
-                _goodsCount = goodsCount;
-            }
-        }
-
-        public void AddGoodsCount(int goodsCount)
-        {
-            if (goodsCount <= 0)
-                throw new InvalidOperationException();
-            else
-                _goodsCount += goodsCount;
-        }
-
-        public void DecreaseGoodsCount(int goodsCount)
-        {
-            _goodsCount -= goodsCount;
+            base.ShowInfo();
         }
     }
 
     public class Warehouse
     {
-        private List<GoodsCell> _cells = new List<GoodsCell>();
-        private bool IsNeedCreateNewCell = true;
+        private List<(Good, int)> _goods = new List<(Good, int)>();
 
-        public IReadOnlyList<GoodsCell> Cells => _cells;
+        public IReadOnlyList<(Good, int)> Goods => _goods;
 
-        private void CreateNewCell(Good good, int goodsCount)
+        public void Delive(Good good, int goodsCount)
         {
-            GoodsCell newCell = new GoodsCell(good, goodsCount);
-            _cells.Add(newCell);
+            AddNewGoods(good, goodsCount);
         }
 
-        private int CheckGoodAvailability(Good good)
+        public virtual void ShowInfo()
         {
-            for (int i = 0; i < _cells.Count; i++)
+            for (int i = 0; i < _goods.Count; i++)
             {
-                if (_cells[i].Good.Label == good.Label)
+                Console.Write($"Название - {_goods[i].Item1.Label}");
+                Console.WriteLine($" количество - {_goods[i].Item2}");
+            }
+        }
+
+        internal int CheckGoodAvailability(Good good)
+        {
+            for (int i = 0; i < _goods.Count; i++)
+            {
+                if (_goods[i].Item1.Label == good.Label)
                 {
                     return i;
                 }
@@ -123,37 +80,50 @@ namespace Homework2
             return -1;
         }
 
-        public void Delive(Good good, int goodsCount)
+        internal void DecreaseGoodsCount(int goodsCount, int index)
+        {
+            var myStruct = _goods[index];
+            myStruct.Item2 -= goodsCount;
+            _goods[index] = myStruct;
+        }
+
+        protected void AddNewGoods(Good good, int goodsCount)
         {
             int index = CheckGoodAvailability(good);
 
             if (index >= 0)
             {
-                _cells[index].AddGoodsCount(goodsCount);
-                IsNeedCreateNewCell = false;
+                AddGoodsCount(goodsCount, index);
             }
-
-            if(IsNeedCreateNewCell)
+            else
             {
-                CreateNewCell(good, goodsCount);
+                CreateNewGoodPosition(good, goodsCount);
             }
-
-            IsNeedCreateNewCell = true;
         }
 
-        public void ShowInfo()
+        private void AddGoodsCount(int goodsCount, int index)
         {
-            for (int i = 0; i < _cells.Count; i++)
+            if (goodsCount <= 0)
             {
-                Console.Write($"Название - {_cells[i].Good.Label}");
-                Console.WriteLine($" количество - {_cells[i].GoodsCount}");
+                throw new InvalidOperationException();
             }
+            else
+            {
+                var myStruct = _goods[index];
+                myStruct.Item2 += goodsCount;
+                _goods[index] = myStruct;
+            }
+        }
+
+        private void CreateNewGoodPosition(Good good, int goodsCount)
+        {
+            _goods.Add((good, goodsCount));
         }
     }
 
     public class Shop
     {
-        private Warehouse _warehouse;
+        private readonly Warehouse _warehouse;
 
         public Shop(Warehouse warehouse)
         {
@@ -165,12 +135,11 @@ namespace Homework2
             Cart cart = new Cart(_warehouse);
             return cart;
         }
-
     }
 
     public class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Good iPhone12 = new Good("IPhone 12");
             Good iPhone11 = new Good("IPhone 11");
@@ -185,9 +154,9 @@ namespace Homework2
 
             cart.Add(iPhone12, 1);
             cart.Add(iPhone11, 2);
-            cart.Order();
+            cart.ShowInfo();
             cart.Add(iPhone12, 1);
-            cart.Order();
+            cart.ShowInfo();
         }
     }
 }
